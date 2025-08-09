@@ -85,3 +85,8 @@ const char* EngineExceptions::GlfwInitFailure::what() const throw()
 {
     return ("GLFW init failure");
 }
+
+const char* EngineExceptions::VkInitFailure::what() const throw()
+{
+    return ("Vulkan init failure");
+}
