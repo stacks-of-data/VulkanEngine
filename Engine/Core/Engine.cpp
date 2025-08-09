@@ -72,15 +72,7 @@ Engine::Engine():
     window(nullptr),
     vkInstance(NULL)
 {
-    try
-    {
-        initGlfw();
-    }
-    catch(const std::exception& e)
-    {
-        cleanup();
-        throw;
-    }
+    initGlfw();
     
 }
 
