@@ -1,4 +1,17 @@
 #include "Engine.hpp"
+#include <iostream>
+
+void Engine::checkLayersSupport()
+{
+    uint32_t layersCount = 0;
+
+    if (vkEnumerateInstanceLayerProperties(&layersCount, nullptr) != VK_SUCCESS)
+        throw EngineExceptions::VkInitFailure();
+    std::vector<VkLayerProperties> layersProperities(layersCount);
+    if (vkEnumerateInstanceLayerProperties(&layersCount, layersProperities.data()) != VK_SUCCESS)
+        throw EngineExceptions::VkInitFailure();
+    for (std::vector<VkLayerProperties>::iterator it = layersProp)
+}
 
 void Engine::initGlfw()
 {
@@ -72,8 +85,10 @@ Engine::Engine():
     window(nullptr),
     vkInstance(NULL)
 {
+    if (ENGINE_DEBUG)
+        this->layers.push_back("VK_LAYER_KHRONOS_validation");
     initGlfw();
-    
+    initVulkan();
 }
 
 Engine::~Engine()
