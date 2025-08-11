@@ -8,6 +8,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 set(ENGINE_SRCS Engine/main.cpp Engine/Core/Engine.cpp)
 
+include_directories(./glfw)
 add_executable(${PROJECT_NAME} ${ENGINE_SRCS})
 target_link_libraries(${PROJECT_NAME} PRIVATE glfw vulkan dl pthread)
 target_compile_definitions(${PROJECT_NAME} PRIVATE

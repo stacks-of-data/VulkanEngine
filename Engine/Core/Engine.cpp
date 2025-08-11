@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cstring>
 
-LayersCheckResult Engine::checkLayersSupport()
+LayersCheckResult checkLayersSupport(std::vector<const char*>& layers)
 {
     uint32_t layersCount = 0;
     LayersCheckResult layersCheckResult;
@@ -17,7 +17,7 @@ LayersCheckResult Engine::checkLayersSupport()
     res = vkEnumerateInstanceLayerProperties(&layersCount, layersProperties.data());
     if (res != VK_SUCCESS)
         throw EngineExceptions::VKCallFailure("vkEnumerateInstanceLayerProperties", res);
-    for (const char* layer : this->layers)
+    for (const char* layer : layers)
     {
         bool layerFound = false;
 
@@ -37,6 +37,35 @@ LayersCheckResult Engine::checkLayersSupport()
     }
     return layersCheckResult;
 }
+
+std::vector<const char*> getVulkanExtensions()
+{
+    uint32_t extensionsCount;
+    const char** extensionsArr;
+
+    extensionsArr = glfwGetRequiredInstanceExtensions(&extensionsCount);
+    std::vector<const char*> extensions(extensionsArr, extensionsArr + extensionsCount);
+
+    if (ENGINE_DEBUG)
+        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    return extensions;
+}
+
+static VKAPI_ATTR VkBool32 debugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+    void* pUserData
+)
+{
+    std::cout << "validation layer: " << pCallbackData->pMessage << std::endl;
+    return VK_FALSE;
+}
+
+VkResult CreateDebugUtilsMessengerEXT(
+    VkInstance instance,
+    const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo
+)
 
 void Engine::initGlfw()
 {
@@ -58,26 +87,24 @@ void Engine::initVulkan()
     LayersCheckResult layersCheckResult;
     VkApplicationInfo appInfo{};
     VkInstanceCreateInfo createInfo{};
-    uint32_t glfwExtensionCount = 0;
-    const char** glfwExtensions;
 
     try
     {
-        layersCheckResult = checkLayersSupport();
+        layersCheckResult = checkLayersSupport(this->layers);
+        if (!layersCheckResult.status)
+        {
+            std::cerr << "Error: Some layers which are required by the engine are not supported\n"
+                << "Unsupported layers are:\n";
+            for (const char* layer : layersCheckResult.unsupportedLayers)
+                std::cerr << layer << "\n";
+            std::cerr.flush();
+            throw EngineExceptions::VkInitFailure();
+        }
+        this->extensions = getVulkanExtensions();
     }
     catch (const std::exception& e)
     {
         std::cerr << e.what() << std::endl;
-        throw EngineExceptions::VkInitFailure();
-    }
-    
-    if (!layersCheckResult.status)
-    {
-        std::cerr << "Error: Some layers which are required by the engine are not supported\n"
-            << "Unsupported layers are:\n";
-        for (const char* layer : layersCheckResult.unsupportedLayers)
-            std::cerr << layer << "\n";
-        std::cerr.flush();
         throw EngineExceptions::VkInitFailure();
     }
 
@@ -88,8 +115,6 @@ void Engine::initVulkan()
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = VK_API_VERSION_1_0;
 
-    glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
     if (this->layers.size())
@@ -97,8 +122,8 @@ void Engine::initVulkan()
         createInfo.enabledLayerCount = this->layers.size();
         createInfo.ppEnabledLayerNames = this->layers.data();
     }
-    createInfo.enabledExtensionCount = glfwExtensionCount;
-    createInfo.ppEnabledExtensionNames = glfwExtensions;
+    createInfo.enabledExtensionCount = this->extensions.size();
+    createInfo.ppEnabledExtensionNames = this->extensions.data();
     
     VkResult result = vkCreateInstance(&createInfo, nullptr, &this->vkInstance);
     if (result != VK_SUCCESS)

@@ -6,7 +6,6 @@
 #include <vulkan/vulkan.h>
 #include <exception>
 #include <vector>
-#include <string>
 #include <array>
 
 #ifndef ENGINE_DEBUG
@@ -22,7 +21,7 @@ namespace EngineExceptions
 	class VKCallFailure: public std::exception
 	{
         private:
-            std::array<char, 128> msgBuffer;
+            std::array<char, 256> msgBuffer;
         public:
             VKCallFailure(const char* funcName, VkResult errCode);
 		    const char* what() const throw();
@@ -47,12 +46,12 @@ class Engine
 		GLFWwindow* window;
 		VkInstance vkInstance;
 		std::vector<const char*> layers;
+		std::vector<const char*> extensions;
 		void initGlfw();
 		void initVulkan();
 		void cleanupGlfw();
 		void cleanupVulkan();
 		void cleanup();
-		LayersCheckResult checkLayersSupport();
 	public:
 		Engine();
 		~Engine();
