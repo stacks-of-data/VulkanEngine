@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <iostream>
 #include <cstring>
+#include <vulkan/vulkan_core.h>
 
 LayersCheckResult checkLayersSupport(std::vector<const char*>& layers)
 {
@@ -46,26 +47,10 @@ std::vector<const char*> getVulkanExtensions()
     extensionsArr = glfwGetRequiredInstanceExtensions(&extensionsCount);
     std::vector<const char*> extensions(extensionsArr, extensionsArr + extensionsCount);
 
-    if (ENGINE_DEBUG)
+    if (DEBUG)
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     return extensions;
 }
-
-static VKAPI_ATTR VkBool32 debugCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT messageTypes,
-    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-    void* pUserData
-)
-{
-    std::cout << "validation layer: " << pCallbackData->pMessage << std::endl;
-    return VK_FALSE;
-}
-
-VkResult CreateDebugUtilsMessengerEXT(
-    VkInstance instance,
-    const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo
-)
 
 void Engine::initGlfw()
 {
@@ -73,13 +58,13 @@ void Engine::initGlfw()
         throw EngineExceptions::GlfwInitFailure();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    this->window = glfwCreateWindow(800, 800, "VulkanEngine", nullptr, nullptr);
-    if (!this->window)
+    m_window = glfwCreateWindow(800, 800, "VulkanEngine", nullptr, nullptr);
+    if (!m_window)
     {
         glfwTerminate();
         throw EngineExceptions::GlfwInitFailure();
     }
-    this->glfwInitalized = true;
+    m_glfwInitialized = true;
 }
 
 void Engine::initVulkan()
@@ -87,10 +72,11 @@ void Engine::initVulkan()
     LayersCheckResult layersCheckResult;
     VkApplicationInfo appInfo{};
     VkInstanceCreateInfo createInfo{};
+	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 
     try
     {
-        layersCheckResult = checkLayersSupport(this->layers);
+        layersCheckResult = checkLayersSupport(m_layers);
         if (!layersCheckResult.status)
         {
             std::cerr << "Error: Some layers which are required by the engine are not supported\n"
@@ -100,7 +86,7 @@ void Engine::initVulkan()
             std::cerr.flush();
             throw EngineExceptions::VkInitFailure();
         }
-        this->extensions = getVulkanExtensions();
+        m_extensions = getVulkanExtensions();
     }
     catch (const std::exception& e)
     {
@@ -117,53 +103,60 @@ void Engine::initVulkan()
 
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
-    if (this->layers.size())
+    if (m_layers.size())
     {
-        createInfo.enabledLayerCount = this->layers.size();
-        createInfo.ppEnabledLayerNames = this->layers.data();
+        createInfo.enabledLayerCount = m_layers.size();
+        createInfo.ppEnabledLayerNames = m_layers.data();
     }
-    createInfo.enabledExtensionCount = this->extensions.size();
-    createInfo.ppEnabledExtensionNames = this->extensions.data();
+	if (DEBUG)
+		createInfo.pNext = &m_debugMessenger.createInfo;
+    createInfo.enabledExtensionCount = m_extensions.size();
+    createInfo.ppEnabledExtensionNames = m_extensions.data();
     
-    VkResult result = vkCreateInstance(&createInfo, nullptr, &this->vkInstance);
+    VkResult result = vkCreateInstance(&createInfo, nullptr, &m_instance);
     if (result != VK_SUCCESS)
         throw EngineExceptions::VkInitFailure();
+	if (DEBUG)
+		m_debugMessenger.load(m_instance);
+	this->m_vkInitialized = true;
 }
 
 void Engine::cleanupGlfw()
 {
-    glfwDestroyWindow(this->window);
+    glfwDestroyWindow(m_window);
     glfwTerminate();
 }
 
 void Engine::cleanupVulkan()
 {
-    vkDestroyInstance(this->vkInstance, nullptr);
+	if (DEBUG)
+		m_debugMessenger.destroy();
+    vkDestroyInstance(m_instance, nullptr);
 }
 
 void Engine::loop()
 {
-    while (!glfwWindowShouldClose(this->window))
+    while (!glfwWindowShouldClose(m_window))
         glfwPollEvents();
 }
 
 void Engine::cleanup()
 {
-    if (this->vkInitalized)
+    if (m_vkInitialized)
         cleanupVulkan();
-    if (this->glfwInitalized)
+    if (m_glfwInitialized)
         cleanupGlfw();
 }
 
 Engine::Engine():
-    glfwInitalized(false),
-    vkInitalized(false),
-    window(nullptr),
-    vkInstance(NULL)
+    m_glfwInitialized(false),
+    m_vkInitialized(false),
+    m_window(nullptr),
+    m_instance(NULL)
 {
-    if (ENGINE_DEBUG)
+    if (DEBUG)
     {
-        this->layers.push_back("VK_LAYER_KHRONOS_validation");
+        m_layers.push_back("VK_LAYER_KHRONOS_validation");
         std::cout << "Debugging mode enabled!" << std::endl;
     }
     initGlfw();

@@ -7,9 +7,10 @@
 #include <exception>
 #include <vector>
 #include <array>
+#include "DebugMessenger.hpp"
 
-#ifndef ENGINE_DEBUG
-	#define ENGINE_DEBUG 0
+#ifndef DEBUG
+	#define DEBUG 0
 #endif
 
 namespace EngineExceptions
@@ -41,12 +42,13 @@ typedef struct SLayersCheckResult
 class Engine
 {
 	private:
-		bool glfwInitalized;
-		bool vkInitalized;
-		GLFWwindow* window;
-		VkInstance vkInstance;
-		std::vector<const char*> layers;
-		std::vector<const char*> extensions;
+		bool m_glfwInitialized;
+		bool m_vkInitialized;
+		GLFWwindow* m_window;
+		VkInstance m_instance;
+		std::vector<const char*> m_layers;
+		std::vector<const char*> m_extensions;
+		DebugMessenger m_debugMessenger;
 		void initGlfw();
 		void initVulkan();
 		void cleanupGlfw();
