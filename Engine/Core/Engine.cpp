@@ -67,6 +67,15 @@ void Engine::initGlfw()
     m_glfwInitialized = true;
 }
 
+void Engine::selectPhysicalDevice()
+{
+	uint32_t devicesCount = 0;
+
+	vkEnumeratePhysicalDevices(this->m_instance, &devicesCount, nullptr);
+	if (!devicesCount)
+		
+}
+
 void Engine::initVulkan()
 {
     LayersCheckResult layersCheckResult;

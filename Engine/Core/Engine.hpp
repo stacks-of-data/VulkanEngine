@@ -54,6 +54,7 @@ class Engine
 		void cleanupGlfw();
 		void cleanupVulkan();
 		void cleanup();
+		void selectPhysicalDevice();
 	public:
 		Engine();
 		~Engine();
