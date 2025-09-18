@@ -1,5 +1,6 @@
 #include "Core/Engine.hpp"
 #include <iostream>
+#include "Core/Logger.hpp"
 
 int main()
 {
@@ -12,7 +13,7 @@ int main()
     }
     catch (const std::exception& e)
     {
-        std::cerr << e.what() << std::endl;
+        LOG_ERROR(e.what());
         delete engine;
         return EXIT_FAILURE;
     }

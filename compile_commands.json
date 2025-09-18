@@ -1,0 +1,22 @@
+[
+{
+  "directory": "/home/coderx64/VulkanEngine/debug",
+  "command": "/usr/bin/c++ -DDEBUG=1 -I/home/coderx64/VulkanEngine/./glfw -g -std=gnu++17 -o CMakeFiles/engine.dir/Engine/main.cpp.o -c /home/coderx64/VulkanEngine/Engine/main.cpp",
+  "file": "/home/coderx64/VulkanEngine/Engine/main.cpp"
+},
+{
+  "directory": "/home/coderx64/VulkanEngine/debug",
+  "command": "/usr/bin/c++ -DDEBUG=1 -I/home/coderx64/VulkanEngine/./glfw -g -std=gnu++17 -o CMakeFiles/engine.dir/Engine/Core/Engine.cpp.o -c /home/coderx64/VulkanEngine/Engine/Core/Engine.cpp",
+  "file": "/home/coderx64/VulkanEngine/Engine/Core/Engine.cpp"
+},
+{
+  "directory": "/home/coderx64/VulkanEngine/debug",
+  "command": "/usr/bin/c++ -DDEBUG=1 -I/home/coderx64/VulkanEngine/./glfw -g -std=gnu++17 -o CMakeFiles/engine.dir/Engine/Core/DebugMessenger.cpp.o -c /home/coderx64/VulkanEngine/Engine/Core/DebugMessenger.cpp",
+  "file": "/home/coderx64/VulkanEngine/Engine/Core/DebugMessenger.cpp"
+},
+{
+  "directory": "/home/coderx64/VulkanEngine/debug",
+  "command": "/usr/bin/c++ -DDEBUG=1 -I/home/coderx64/VulkanEngine/./glfw -g -std=gnu++17 -o CMakeFiles/engine.dir/Engine/Core/Logger.cpp.o -c /home/coderx64/VulkanEngine/Engine/Core/Logger.cpp",
+  "file": "/home/coderx64/VulkanEngine/Engine/Core/Logger.cpp"
+}
+]

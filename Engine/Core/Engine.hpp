@@ -15,28 +15,20 @@
 
 namespace EngineExceptions
 {
-	class GlfwInitFailure: public std::exception
-	{
-		const char* what() const throw();
-	};
 	class VKCallFailure: public std::exception
 	{
-        private:
-            std::array<char, 256> msgBuffer;
-        public:
-            VKCallFailure(const char* funcName, VkResult errCode);
-		    const char* what() const throw();
-	};
-    class VkInitFailure: public std::exception
-	{
-		const char* what() const throw();
+		private:
+			std::array<char, 1024> msgBuffer;
+		public:
+			VKCallFailure(const char* funcName, VkResult errCode);
+			const char* what() const throw();
 	};
 }
 
 typedef struct SLayersCheckResult
 {
-    bool status;
-    std::vector<const char*> unsupportedLayers;
+	bool status;
+	std::vector<const char*> unsupportedLayers;
 } LayersCheckResult;
 
 class Engine
