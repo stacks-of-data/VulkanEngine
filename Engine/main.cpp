@@ -1,18 +1,15 @@
 #include "Core/Engine.hpp"
-#include <iostream>
 #include "Core/Logger.hpp"
+#include <iostream>
 
 int main()
 {
     Engine* engine = nullptr;
 
-    try
-    {
+    try {
         engine = new Engine();
         engine->loop();
-    }
-    catch (const std::exception& e)
-    {
+    } catch (const std::exception& e) {
         LOG_ERROR(e.what());
         delete engine;
         return EXIT_FAILURE;
