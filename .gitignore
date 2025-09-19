@@ -2,3 +2,4 @@
 .cache
 debug
 release
+compile_commands.json
