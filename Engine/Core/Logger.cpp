@@ -1,4 +1,5 @@
 #include "Logger.hpp"
+#include <exception>
 #include <ostream>
 
 Logger::Logger()
@@ -11,13 +12,13 @@ Logger::Logger()
 
 Logger::~Logger() { }
 
-Logger& Logger::getInstance()
+Logger& Logger::getInstance() noexcept
 {
     static Logger logger;
     return logger;
 }
 
-static const char* levelToStr(LogLevel level)
+static const char* levelToStr(LogLevel level) noexcept
 {
     switch (level) {
     case VERBOSE:
@@ -33,27 +34,31 @@ static const char* levelToStr(LogLevel level)
     }
 }
 
-void Logger::log(LogLevel level, const std::string& msg)
+void Logger::log(LogLevel level, const std::string& msg) noexcept
 {
-    std::string output = "Logger: ";
-    output.push_back('[');
-    output.append(levelToStr(level));
-    output.append("]: ");
-    output.append(msg);
-    if (level > INFO)
-        std::cerr << output << std::endl;
-    else
-        std::cout << output << std::endl;
-    if (this->m_logFile.is_open()) {
-        this->m_logFile << output << std::endl;
-        if (!this->m_logFile.good()) {
-            std::cerr << "Logger [ERROR]: Writing to log file failed" << std::endl;
-            this->m_logFile.close();
+    try {
+        std::string output = "Logger: ";
+        output.push_back('[');
+        output.append(levelToStr(level));
+        output.append("]: ");
+        output.append(msg);
+        if (level > INFO)
+            std::cerr << output << std::endl;
+        else
+            std::cout << output << std::endl;
+        if (this->m_logFile.is_open()) {
+            this->m_logFile << output << std::endl;
+            if (!this->m_logFile.good()) {
+                std::cerr << "Logger [ERROR]: Writing to log file failed" << std::endl;
+                this->m_logFile.close();
+            }
         }
+    } catch (const std::exception& e) {
+        std::cerr << "Logger [ERROR]: Logging failed: " << e.what() << std::endl;
     }
 }
 
-void Logger::verbose(const std::string& msg) { return this->log(LogLevel::VERBOSE, msg); }
-void Logger::info(const std::string& msg) { return this->log(LogLevel::INFO, msg); }
-void Logger::warning(const std::string& msg) { return this->log(LogLevel::WARNING, msg); }
-void Logger::error(const std::string& msg) { return this->log(LogLevel::ERROR, msg); }
+void Logger::verbose(const std::string& msg) noexcept { log(LogLevel::VERBOSE, msg); }
+void Logger::info(const std::string& msg) noexcept { log(LogLevel::INFO, msg); }
+void Logger::warning(const std::string& msg) noexcept { log(LogLevel::WARNING, msg); }
+void Logger::error(const std::string& msg) noexcept { log(LogLevel::ERROR, msg); }

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <fstream>
 #include <iostream>
 
@@ -17,10 +19,10 @@ private:
     Logger& operator=(const Logger&) = delete;
 
 public:
-    static Logger& getInstance();
-    void log(LogLevel level, const std::string& msg);
-    void verbose(const std::string& msg);
-    void info(const std::string& msg);
-    void warning(const std::string& msg);
-    void error(const std::string& msg);
+    static Logger& getInstance() noexcept;
+    void log(LogLevel level, const std::string& msg) noexcept;
+    void verbose(const std::string& msg) noexcept;
+    void info(const std::string& msg) noexcept;
+    void warning(const std::string& msg) noexcept;
+    void error(const std::string& msg) noexcept;
 };
