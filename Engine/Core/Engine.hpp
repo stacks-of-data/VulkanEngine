@@ -5,8 +5,8 @@
 
 class Engine {
 private:
-    GlfwContext m_glfwContext;
-    VulkanContext m_vkContext;
+    GlfwContext glfwContext;
+    VulkanContext vkContext;
 public:
     Engine();
     ~Engine();

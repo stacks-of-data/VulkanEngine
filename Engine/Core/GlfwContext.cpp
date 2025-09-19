@@ -5,15 +5,15 @@
 #include <stdexcept>
 
 GlfwContext::GlfwContext()
-    : m_window(nullptr)
+    : window(nullptr)
 {
     try {
         if (glfwInit() == GLFW_FALSE)
             throw std::runtime_error("glfwInit failed");
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-        m_window = glfwCreateWindow(800, 800, "VulkanEngine", nullptr, nullptr);
-        if (!m_window) {
+        window = glfwCreateWindow(800, 800, "VulkanEngine", nullptr, nullptr);
+        if (!window) {
             throw std::runtime_error("glfwCreateWindow failed");
         }
     } catch (const std::exception& e) {
@@ -25,15 +25,15 @@ GlfwContext::GlfwContext()
 
 GlfwContext::~GlfwContext()
 {
-    if (this->m_window)
-        glfwDestroyWindow(this->m_window);
+    if (this->window)
+        glfwDestroyWindow(this->window);
     glfwTerminate();
 }
 
-GLFWwindow* GlfwContext::getWindow() { return this->m_window; }
+GLFWwindow* GlfwContext::getWindow() { return this->window; }
 
 void GlfwContext::loop()
 {
-    while (!glfwWindowShouldClose(this->m_window))
+    while (!glfwWindowShouldClose(this->window))
         glfwPollEvents();
 }

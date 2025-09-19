@@ -12,7 +12,7 @@ enum LogLevel { VERBOSE, INFO, WARNING, ERROR };
 
 class Logger {
 private:
-    std::fstream m_logFile;
+    std::fstream logFile;
     Logger();
     ~Logger();
     Logger(const Logger&) = delete;

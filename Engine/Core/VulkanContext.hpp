@@ -43,15 +43,16 @@ struct PhysicalDeviceInfo {
 
 class VulkanContext {
 private:
-    GlfwContext& m_glfwContext;
-    VkInstance m_instance;
-    VkPhysicalDevice m_physicalDevice;
-    QueueFamilyIndices m_queueFamilyIndices;
-    VkDevice m_device;
-    VkSurfaceKHR m_surface;
-    DebugMessenger m_debugMessenger;
-    std::vector<const char*> m_layers;
-    std::vector<const char*> m_extensions;
+    GlfwContext& glfwContext;
+    VkInstance instance;
+    VkPhysicalDevice physicalDevice;
+    QueueFamilyIndices queueFamilyIndices;
+    VkDevice device;
+    VkSurfaceKHR surface;
+    DebugMessenger debugMessenger;
+    VkQueue presentationQueue;
+    std::vector<const char*> layers;
+    std::vector<const char*> extensions;
     void selectPhysicalDevice();
     void init();
     void cleanup();

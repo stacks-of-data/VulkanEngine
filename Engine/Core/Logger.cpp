@@ -4,10 +4,10 @@
 
 Logger::Logger()
 {
-    this->m_logFile.open("log.txt", std::fstream::out);
-    if (!this->m_logFile.is_open())
+    this->logFile.open("log.txt", std::fstream::out);
+    if (!this->logFile.is_open())
         std::cerr << "Logger [ERROR]: Could not open log.txt for logging" << std::endl;
-    this->m_logFile << "Logger [INFO]: Logger Started" << std::endl;
+    this->logFile << "Logger [INFO]: Logger Started" << std::endl;
 }
 
 Logger::~Logger() { }
@@ -46,11 +46,11 @@ void Logger::log(LogLevel level, const std::string& msg) noexcept
             std::cerr << output << std::endl;
         else
             std::cout << output << std::endl;
-        if (this->m_logFile.is_open()) {
-            this->m_logFile << output << std::endl;
-            if (!this->m_logFile.good()) {
+        if (this->logFile.is_open()) {
+            this->logFile << output << std::endl;
+            if (!this->logFile.good()) {
                 std::cerr << "Logger [ERROR]: Writing to log file failed" << std::endl;
-                this->m_logFile.close();
+                this->logFile.close();
             }
         }
     } catch (const std::exception& e) {

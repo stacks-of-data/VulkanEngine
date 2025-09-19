@@ -21,33 +21,33 @@ static VKAPI_ATTR VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT 
 
 DebugMessenger::DebugMessenger()
 {
-    m_createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    m_createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+    createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
         | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
         | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
         | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-    m_createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+    createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
         | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
         | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    m_createInfo.pfnUserCallback = debugCallback;
+    createInfo.pfnUserCallback = debugCallback;
 }
 
 void DebugMessenger::destroy()
 {
-    m_vkDestroyDebugUtilsMessengerEXT(m_instance, m_debugMessenger, nullptr);
+    vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 }
 
 void DebugMessenger::load(VkInstance instance)
 {
-    m_instance = instance;
-    m_vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
-        m_instance, "vkCreateDebugUtilsMessengerEXT");
-    m_vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
-        m_instance, "vkDestroyDebugUtilsMessengerEXT");
-    m_vkCreateDebugUtilsMessengerEXT(m_instance, &m_createInfo, nullptr, &m_debugMessenger);
+    instance = instance;
+    vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+        instance, "vkCreateDebugUtilsMessengerEXT");
+    vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+        instance, "vkDestroyDebugUtilsMessengerEXT");
+    vkCreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger);
 }
 
 const VkDebugUtilsMessengerCreateInfoEXT& DebugMessenger::getCreateInfo() const
 {
-    return this->m_createInfo;
+    return this->createInfo;
 }

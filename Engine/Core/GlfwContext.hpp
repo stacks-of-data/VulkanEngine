@@ -5,7 +5,7 @@
 
 class GlfwContext {
 private:
-    GLFWwindow* m_window;
+    GLFWwindow* window;
 
 public:
     GlfwContext();

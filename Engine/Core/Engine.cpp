@@ -2,11 +2,11 @@
 #include "Logger.hpp"
 #include <stdexcept>
 
-void Engine::loop() { this->m_glfwContext.loop(); }
+void Engine::loop() { this->glfwContext.loop(); }
 
 Engine::Engine()
-    : m_glfwContext()
-    , m_vkContext(m_glfwContext)
+    : glfwContext()
+    , vkContext(glfwContext)
 {
 }
 

@@ -4,11 +4,11 @@
 
 class DebugMessenger {
 private:
-    PFN_vkCreateDebugUtilsMessengerEXT m_vkCreateDebugUtilsMessengerEXT;
-    PFN_vkDestroyDebugUtilsMessengerEXT m_vkDestroyDebugUtilsMessengerEXT;
-    VkInstance m_instance;
-    VkDebugUtilsMessengerEXT m_debugMessenger;
-    VkDebugUtilsMessengerCreateInfoEXT m_createInfo;
+    PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT;
+    PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT;
+    VkInstance instance;
+    VkDebugUtilsMessengerEXT debugMessenger;
+    VkDebugUtilsMessengerCreateInfoEXT createInfo;
 
 public:
     DebugMessenger();

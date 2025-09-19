@@ -3,6 +3,7 @@
 #include "GlfwContext.hpp"
 #include "Logger.hpp"
 #include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <string>
 #include <vulkan/vulkan_core.h>
@@ -11,6 +12,7 @@
 #include <cstring>
 #include <map>
 #include <stdexcept>
+#include <unordered_set>
 #include <vulkan/vulkan.h>
 
 LayersCheckResult checkLayersSupport(std::vector<const char*>& layers)
@@ -72,7 +74,10 @@ QueueFamilyIndices findQueueFamilies(VkSurfaceKHR surface, VkPhysicalDevice phys
 
     for (uint32_t i = 0; i < queueFamiliesCount; i++) {
         VkBool32 presentationSupport = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentationSupport);
+        VkResult res = vkGetPhysicalDeviceSurfaceSupportKHR(
+            physicalDevice, i, surface, &presentationSupport);
+        if (res != VK_SUCCESS)
+            throw VulkanExceptions::VKCallFailure("vkGetPhysicalDeviceSurfaceSupportKHR", res);
         if (queueFamiliesProps[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
             queueFamilyIndices.graphicsFamily = i;
         if (presentationSupport)
@@ -113,19 +118,19 @@ void VulkanContext::selectPhysicalDevice()
     std::multimap<int, PhysicalDeviceInfo> devicesScoreMap;
     VkResult res;
 
-    res = vkEnumeratePhysicalDevices(this->m_instance, &devicesCount, nullptr);
+    res = vkEnumeratePhysicalDevices(this->instance, &devicesCount, nullptr);
     if (res != VK_SUCCESS)
         throw VulkanExceptions::VKCallFailure("vkEnumeratePhysicalDevices", res);
     if (!devicesCount)
         throw std::runtime_error("Failed to find compatible GPUs with Vulkan");
     physicalDevices.resize(devicesCount);
-    res = vkEnumeratePhysicalDevices(this->m_instance, &devicesCount, physicalDevices.data());
+    res = vkEnumeratePhysicalDevices(this->instance, &devicesCount, physicalDevices.data());
     if (res != VK_SUCCESS)
         throw VulkanExceptions::VKCallFailure("vkEnumeratePhysicalDevices", res);
 
     for (VkPhysicalDevice physicalDevice : physicalDevices) {
         PhysicalDeviceInfo physicalDeviceInfo
-            = evaluatePhysicalDevice(this->m_surface, physicalDevice);
+            = evaluatePhysicalDevice(this->surface, physicalDevice);
         devicesScoreMap.insert(std::make_pair(physicalDeviceInfo.score, physicalDeviceInfo));
     }
 
@@ -137,8 +142,8 @@ void VulkanContext::selectPhysicalDevice()
     if (rit->first < 1)
         throw std::runtime_error("Failed to find suitable GPUs for the Engine");
 
-    this->m_physicalDevice = rit->second.device;
-    this->m_queueFamilyIndices = rit->second.queueFamilyIndices;
+    this->physicalDevice = rit->second.device;
+    this->queueFamilyIndices = rit->second.queueFamilyIndices;
 }
 
 void VulkanContext::setupInstance()
@@ -155,53 +160,63 @@ void VulkanContext::setupInstance()
 
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
-    if (m_layers.size()) {
-        createInfo.enabledLayerCount = m_layers.size();
-        createInfo.ppEnabledLayerNames = m_layers.data();
+    if (layers.size()) {
+        createInfo.enabledLayerCount = layers.size();
+        createInfo.ppEnabledLayerNames = layers.data();
     }
 #ifdef ENGINE_DEBUG
-    createInfo.pNext = &m_debugMessenger.getCreateInfo();
+    createInfo.pNext = &debugMessenger.getCreateInfo();
 #endif
-    createInfo.enabledExtensionCount = m_extensions.size();
-    createInfo.ppEnabledExtensionNames = m_extensions.data();
+    createInfo.enabledExtensionCount = extensions.size();
+    createInfo.ppEnabledExtensionNames = extensions.data();
 
-    VkResult res = vkCreateInstance(&createInfo, nullptr, &m_instance);
+    VkResult res = vkCreateInstance(&createInfo, nullptr, &instance);
     if (res != VK_SUCCESS)
         throw VulkanExceptions::VKCallFailure("vkCreateInstance", res);
 }
 
 void VulkanContext::setupDevice()
 {
-    VkDeviceQueueCreateInfo queueCreateInfo {};
     VkPhysicalDeviceFeatures physicalDeviceFeatures {};
     VkDeviceCreateInfo createInfo {};
 
+    std::unordered_set<uint32_t> queueFamilitesSet = { *this->queueFamilyIndices.graphicsFamily,
+        *this->queueFamilyIndices.presentationFamily };
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+    queueCreateInfos.reserve(queueFamilitesSet.size());
+
     float queuePriority = 1.0f;
 
-    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queueCreateInfo.queueFamilyIndex = this->m_queueFamilyIndices.graphicsFamily.value();
-    queueCreateInfo.queueCount = 1;
-    queueCreateInfo.pQueuePriorities = &queuePriority;
-
-    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    createInfo.pQueueCreateInfos = &queueCreateInfo;
-    createInfo.queueCreateInfoCount = 1;
-    createInfo.pEnabledFeatures = &physicalDeviceFeatures;
-    createInfo.enabledExtensionCount = 0;
-    if (m_layers.size()) {
-        createInfo.enabledLayerCount = m_layers.size();
-        createInfo.ppEnabledLayerNames = m_layers.data();
+    for (const uint32_t queueFamily : queueFamilitesSet) {
+        VkDeviceQueueCreateInfo queueCreateInfo {};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = queueFamily;
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
+        queueCreateInfos.push_back(queueCreateInfo);
     }
 
-    VkResult res = vkCreateDevice(this->m_physicalDevice, &createInfo, nullptr, &this->m_device);
+    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    createInfo.pQueueCreateInfos = queueCreateInfos.data();
+    createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+    createInfo.pEnabledFeatures = &physicalDeviceFeatures;
+    createInfo.enabledExtensionCount = 0;
+    if (layers.size()) {
+        createInfo.enabledLayerCount = layers.size();
+        createInfo.ppEnabledLayerNames = layers.data();
+    }
+
+    VkResult res = vkCreateDevice(this->physicalDevice, &createInfo, nullptr, &this->device);
     if (res != VK_SUCCESS)
         throw VulkanExceptions::VKCallFailure("vkCreateDevice", res);
+    vkGetDeviceQueue(
+        this->device, *this->queueFamilyIndices.presentationFamily, 0, &presentationQueue);
 }
 
 void VulkanContext::createSurface()
 {
     if (glfwCreateWindowSurface(
-            this->m_instance, this->m_glfwContext.getWindow(), nullptr, &this->m_surface))
+            this->instance, this->glfwContext.getWindow(), nullptr, &this->surface))
         std::runtime_error("glfwCreateWindowSurface failed");
 }
 
@@ -210,7 +225,7 @@ void VulkanContext::init()
     LayersCheckResult layersCheckResult;
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo {};
 
-    layersCheckResult = checkLayersSupport(m_layers);
+    layersCheckResult = checkLayersSupport(layers);
     if (!layersCheckResult.status) {
         std::string msg = "Error: Some layers which are required by the engine "
                           "are not supported\n"
@@ -221,12 +236,12 @@ void VulkanContext::init()
         }
         throw std::runtime_error(msg);
     }
-    m_extensions = getVulkanExtensions();
+    extensions = getVulkanExtensions();
 
     setupInstance();
 
 #ifdef ENGINE_DEBUG
-    this->m_debugMessenger.load(m_instance);
+    this->debugMessenger.load(instance);
 #endif
 
     createSurface();
@@ -235,15 +250,15 @@ void VulkanContext::init()
 }
 
 VulkanContext::VulkanContext(GlfwContext& glfwContext)
-    : m_glfwContext(glfwContext)
-    , m_instance(nullptr)
-    , m_physicalDevice(nullptr)
-    , m_queueFamilyIndices()
-    , m_device(nullptr)
-    , m_debugMessenger()
+    : glfwContext(glfwContext)
+    , instance(nullptr)
+    , physicalDevice(nullptr)
+    , queueFamilyIndices()
+    , device(nullptr)
+    , debugMessenger()
 {
 #ifdef ENGINE_DEBUG
-    this->m_layers.push_back("VK_LAYER_KHRONOS_validation");
+    this->layers.push_back("VK_LAYER_KHRONOS_validation");
     LOG_VERBOSE("Debugging mode enabled!");
 #endif
     try {
@@ -256,12 +271,12 @@ VulkanContext::VulkanContext(GlfwContext& glfwContext)
 
 void VulkanContext::cleanup()
 {
-    vkDestroySurfaceKHR(this->m_instance, this->m_surface, nullptr);
-    vkDestroyDevice(this->m_device, nullptr);
+    vkDestroySurfaceKHR(this->instance, this->surface, nullptr);
+    vkDestroyDevice(this->device, nullptr);
 #ifdef ENGINE_DEBUG
-    m_debugMessenger.destroy();
+    debugMessenger.destroy();
 #endif
-    vkDestroyInstance(m_instance, nullptr);
+    vkDestroyInstance(instance, nullptr);
 }
 
 VulkanContext::~VulkanContext() { cleanup(); }
