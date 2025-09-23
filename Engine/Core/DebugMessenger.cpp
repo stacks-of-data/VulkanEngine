@@ -1,6 +1,7 @@
 #include "DebugMessenger.hpp"
+#include "CommonExceptions.hpp"
 #include "Logger.hpp"
-#include <iostream>
+#include <vulkan/vulkan_core.h>
 
 static VKAPI_ATTR VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     VkDebugUtilsMessageTypeFlagsEXT messageTypes,
@@ -20,6 +21,12 @@ static VKAPI_ATTR VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT 
 }
 
 DebugMessenger::DebugMessenger()
+    : vkCreateDebugUtilsMessengerEXT(nullptr)
+    , vkDestroyDebugUtilsMessengerEXT(nullptr)
+    , instance(nullptr)
+    , debugMessenger(nullptr)
+    , createInfo()
+
 {
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
@@ -34,17 +41,20 @@ DebugMessenger::DebugMessenger()
 
 void DebugMessenger::destroy()
 {
-    vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+    if (this->instance)
+        vkDestroyDebugUtilsMessengerEXT(this->instance, this->debugMessenger, nullptr);
 }
 
 void DebugMessenger::load(VkInstance instance)
 {
-    instance = instance;
     vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
         instance, "vkCreateDebugUtilsMessengerEXT");
     vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
         instance, "vkDestroyDebugUtilsMessengerEXT");
-    vkCreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger);
+    VkResult res = vkCreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &this->debugMessenger);
+    if (res != VK_SUCCESS)
+        VulkanExceptions::VKCallFailure("vkCreateDebugUtilsMessengerEXT", res);
+    this->instance = instance;
 }
 
 const VkDebugUtilsMessengerCreateInfoEXT& DebugMessenger::getCreateInfo() const

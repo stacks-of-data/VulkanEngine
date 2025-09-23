@@ -4,9 +4,19 @@ project(engine)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -Wshadow")
 
-set(ENGINE_SRCS Engine/main.cpp Engine/Core/Engine.cpp Engine/Core/DebugMessenger.cpp Engine/Core/Logger.cpp Engine/Core/GlfwContext.cpp Engine/Core/VulkanContext.cpp)
+set(
+    ENGINE_SRCS
+    Engine/main.cpp
+    Engine/Core/Engine.cpp
+    Engine/Core/DebugMessenger.cpp
+    Engine/Core/Logger.cpp
+    Engine/Core/GlfwContext.cpp
+    Engine/Core/VulkanContext.cpp
+    Engine/Core/DeviceContext.cpp
+    Engine/Core/CommonExceptions.cpp
+)
 
 include_directories(./glfw)
 add_executable(${PROJECT_NAME} ${ENGINE_SRCS})

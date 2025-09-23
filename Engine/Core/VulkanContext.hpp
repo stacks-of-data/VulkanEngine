@@ -1,38 +1,15 @@
 #pragma once
 
 #include "DebugMessenger.hpp"
-#include <array>
-#include <exception>
-#include <optional>
+#include "DeviceContext.hpp"
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
 class GlfwContext;
 
-namespace VulkanExceptions {
-class VKCallFailure : public std::exception {
-private:
-    std::array<char, 1024> msgBuffer;
-
-public:
-    VKCallFailure(const char* funcName, VkResult errCode);
-    const char* what() const throw();
-};
-}
-
 struct LayersCheckResult {
     bool status;
     std::vector<const char*> unsupportedLayers;
-};
-
-struct QueueFamilyIndices {
-    std::optional<uint32_t> graphicsFamily;
-    std::optional<uint32_t> presentationFamily;
-
-    bool isQueueFamiliesFound()
-    {
-        return graphicsFamily.has_value() && presentationFamily.has_value();
-    }
 };
 
 struct PhysicalDeviceInfo {
@@ -43,21 +20,18 @@ struct PhysicalDeviceInfo {
 
 class VulkanContext {
 private:
-    GlfwContext& glfwContext;
+    GlfwContext& glfwCtx;
     VkInstance instance;
     VkPhysicalDevice physicalDevice;
-    QueueFamilyIndices queueFamilyIndices;
-    VkDevice device;
     VkSurfaceKHR surface;
     DebugMessenger debugMessenger;
-    VkQueue presentationQueue;
+    DeviceContext deviceCtx;
     std::vector<const char*> layers;
     std::vector<const char*> extensions;
-    void selectPhysicalDevice();
+    PhysicalDeviceInfo selectPhysicalDevice();
     void init();
     void cleanup();
     void setupInstance();
-    void setupDevice();
     void createSurface();
 
     VulkanContext() = delete;
@@ -65,6 +39,6 @@ private:
     VulkanContext(VulkanContext&) = delete;
 
 public:
-    VulkanContext(GlfwContext& glfwContext);
+    VulkanContext(GlfwContext& glfwCtx);
     ~VulkanContext();
 };
